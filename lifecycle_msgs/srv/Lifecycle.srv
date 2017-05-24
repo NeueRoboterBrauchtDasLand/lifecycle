@@ -1,0 +1,7 @@
+uint8 action # The node must perform this action.
+uint8 lifecycle # For action GO_IN_STATE the target lifecycle state.
+uint8 ACTION_GET_STATE=1
+uint8 ACTION_GO_IN_STATE=2
+uint8 ACTION_SHUTDOWN=3
+---
+uint8 lifecycle # The current lifecycle of the node.
