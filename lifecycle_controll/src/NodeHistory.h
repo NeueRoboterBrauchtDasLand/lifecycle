@@ -4,7 +4,7 @@
 #include <list>
 #include <cstddef>
 
-#include <lifecycled_node/NodeStatus.h>
+#include <lifecycle_msgs/CppNodeStatus.h>
 
 namespace lifecycle_controll {
 
@@ -13,7 +13,7 @@ class NodeHistory
 public:
     NodeHistory(const std::size_t maxItems = 1000, const ros::Duration& statusLifeTime = ros::Duration(120.0));
 
-    bool insert(const lifecycled_node::NodeStatus& status);
+    bool insert(const lifecycle_msgs::cpp::NodeStatus& status);
     void cleanup(void);
     void update(void);
 
@@ -21,10 +21,14 @@ public:
     void setStatusLifeTime(const ros::Duration& lifeTime) { _statLifeTime = lifeTime; }
 
     unsigned int count(void) const { return _stats.size(); }
+    lifecycle_msgs::cpp::NodeStatus lastStatus(void) const
+    {
+        return !_stats.size() ? lifecycle_msgs::cpp::NodeStatus() : _stats.front();
+    }
 
 private:
-    std::list<lifecycled_node::NodeStatus> _stats;
-    std::list<lifecycled_node::NodeStatus> _inserts;
+    std::list<lifecycle_msgs::cpp::NodeStatus> _stats;
+    std::list<lifecycle_msgs::cpp::NodeStatus> _inserts;
     std::size_t _maxStats;
     ros::Duration _statLifeTime;
 };

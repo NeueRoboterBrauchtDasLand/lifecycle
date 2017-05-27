@@ -6,7 +6,6 @@ project(lifecycle_msgs)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   message_generation
-  message_runtime
   std_msgs
 )
 
@@ -47,12 +46,14 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   NodeStatus.msg
+  NodeStatusArray.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   Lifecycle.srv
+  LifecycleControllerAction.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -98,9 +99,9 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+ INCLUDE_DIRS include
 #  LIBRARIES lifecycle_msgs
-#  CATKIN_DEPENDS message_generation message_runtime std_msgs
+ CATKIN_DEPENDS message_runtime std_msgs
 #  DEPENDS system_lib
 )
 

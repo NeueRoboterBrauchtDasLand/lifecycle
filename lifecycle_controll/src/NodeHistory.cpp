@@ -9,7 +9,7 @@ NodeHistory::NodeHistory(const std::size_t maxItems, const ros::Duration& status
 
 }
 
-bool NodeHistory::insert(const lifecycled_node::NodeStatus& status)
+bool NodeHistory::insert(const lifecycle_msgs::cpp::NodeStatus& status)
 {
     if (_inserts.size() + 1 >= _maxStats)
         return false;

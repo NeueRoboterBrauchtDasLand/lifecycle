@@ -3,7 +3,9 @@
 
 #include <lifecycle_msgs/NodeStatus.h>
 
-namespace lifecycled_node {
+namespace lifecycle_msgs {
+
+namespace cpp {
 
 class NodeStatus
 {
@@ -15,11 +17,14 @@ public:
         INACTIVE,
         ACTIVE,
         FINALIZED,
-	UNDEFINED
+    	UNDEFINED
     };
 
     NodeStatus(void) = default;
-    NodeStatus(const lifecycle_msgs::NodeStatus& msg)
+    NodeStatus(const ::lifecycle_msgs::NodeStatus& msg)
+        : _lifecycle(static_cast<State>(msg.lifecycle)),
+          _name(msg.node_name),
+          _stamp(msg.stamp)
     {
 
     }
@@ -34,6 +39,16 @@ public:
 
     NodeStatus& operator =(const NodeStatus&) = default;
     NodeStatus& operator =(NodeStatus&&) = default;
+    ::lifecycle_msgs::NodeStatus toMsg(void) const
+    {
+        ::lifecycle_msgs::NodeStatus msg;
+
+        msg.node_name = _name;
+        msg.stamp     = _stamp;
+        msg.lifecycle = static_cast<std::uint8_t>(_lifecycle);
+
+        return msg;
+    }
 
 private:
     State _lifecycle = State::UNDEFINED;
@@ -41,6 +56,8 @@ private:
     ros::Time _stamp;
 };
 
-} // end namespace lifecycled_node
+} // end namespace cpp
+
+} // end namespace lifecycle_msgs
 
 #endif

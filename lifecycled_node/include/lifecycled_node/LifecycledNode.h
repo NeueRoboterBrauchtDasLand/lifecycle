@@ -3,10 +3,12 @@
 
 #include <ros/ros.h>
 
-#include "lifecycled_node/NodeStatus.h"
+#include "lifecycle_msgs/CppNodeStatus.h"
 #include "lifecycle_msgs/Lifecycle.h"
 
 namespace lifecycled_node {
+
+using lifecycle_msgs::cpp::NodeStatus;
 
 class LifecycledNode
 {

@@ -53,8 +53,8 @@ void LifecycledNode::initializeLifecycle(ros::NodeHandle& privNh, ros::NodeHandl
     _srvResponser = nh.advertiseService("/lifecycle/service/" + ros::this_node::getName(),
                                         &LifecycledNode::processServiceRequest,
                                         this);
-    _timer = nh.createTimer(ros::Duration(_processingFreq), &LifecycledNode::processLifecycle, this);
-    _nodeState = NodeStatus::State::UNCONFIGURED;
+    _timer = nh.createTimer(ros::Rate(_processingFreq), &LifecycledNode::processLifecycle, this);
+    _nodeState = NodeStatus::NodeStatus::State::UNCONFIGURED;
 }
 
 void LifecycledNode::onCleanup(void)

@@ -1,0 +1,5 @@
+uint8 action # The controller shall perform this action
+string target_node # The target node. To affect all nodes or a specific group write broadcast or the group name.
+string target_lifecycle # The target lifecycle for the target_node if a lifecycle should be changed.
+uint8 ACTION_CHANGE_LIFECYCLE=1
+---
