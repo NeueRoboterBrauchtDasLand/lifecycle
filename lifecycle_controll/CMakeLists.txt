@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(lifecycled_node)
+project(lifecycle_controll)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   lifecycle_msgs
+  lifecycled_node
   roscpp
 )
 
@@ -99,9 +100,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS include
-#  LIBRARIES lifecycled_node
- CATKIN_DEPENDS lifecycle_msgs roscpp
+#  INCLUDE_DIRS include
+#  LIBRARIES lifecycle_controll
+#  CATKIN_DEPENDS lifecycle_msgs lifecycled_node roscpp
 #  DEPENDS system_lib
 )
 
@@ -114,36 +115,35 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  include
 )
 
 ## Declare a C++ library
-add_library(lifecycled-node
-  src/LifecycledNode.cpp
+add_library(lifecycle-controll
+  src/NodeHistory.cpp
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(lifecycled_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(lifecycle-controll ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(hello-ros-publisher
-  tests/HelloRosPublisherNode.cpp
+add_executable(lifecycle-controller
+  src/lifecycle-controller-node.cpp
 )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(hello-ros-publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(lifecycle_controll_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(lifecycled-node
+target_link_libraries(lifecycle-controll
   ${catkin_LIBRARIES}
 )
 
-target_link_libraries(hello-ros-publisher
+target_link_libraries(lifecycle-controller
   ${catkin_LIBRARIES}
-  lifecycled-node
+  lifecycle-controll
 )
 
 #############
@@ -161,11 +161,11 @@ target_link_libraries(hello-ros-publisher
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS lifecycled-node
+# install(TARGETS lifecycle_controll lifecycle_controll_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# )
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -186,7 +186,7 @@ install(TARGETS lifecycled-node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_lifecycled_node.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_lifecycle_controll.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

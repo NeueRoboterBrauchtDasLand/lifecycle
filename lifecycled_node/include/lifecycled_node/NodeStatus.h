@@ -1,7 +1,7 @@
 #ifndef ___NODE_STATUS_H___
 #define ___NODE_STATUS_H___
 
-#include "lifecycle_msgs/NodeStatus.h"
+#include <lifecycle_msgs/NodeStatus.h>
 
 namespace lifecycled_node {
 
