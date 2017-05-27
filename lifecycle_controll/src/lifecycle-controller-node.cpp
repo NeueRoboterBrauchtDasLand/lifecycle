@@ -43,7 +43,48 @@ void nodeStatusCallback(const lifecycle_msgs::NodeStatus& msg)
 bool callbackService(lifecycle_msgs::LifecycleControllerAction::Request& req,
                      lifecycle_msgs::LifecycleControllerAction::Response& res)
 {
+    switch (req.action)
+    {
+    case lifecycle_msgs::LifecycleControllerAction::Request::ACTION_CHANGE_LIFECYCLE:
+        {
+            auto index = _nodeIdx.find(req.target_node);
 
+            if (req.target_node != "broadcast" && index == _nodeIdx.end())
+            {
+                ROS_ERROR_STREAM(ros::this_node::getName() + ": target node " + req.target_node + " unkown.");
+                return false;
+            }
+
+            lifecycle_msgs::Lifecycle msg;
+
+            msg.request.action = lifecycle_msgs::Lifecycle::Request::ACTION_GO_IN_STATE;
+            msg.request.lifecycle = req.target_lifecycle;
+
+            if (req.target_node == "broadcast")
+            {
+                bool ret = true;
+
+                for (auto& client : _srvsNodeAction)
+                    ret &= client->call(msg);
+
+                return ret;
+            }
+
+            if (!_srvsNodeAction[index->second]->call(msg))
+            {
+                ROS_ERROR_STREAM(ros::this_node::getName() + ": node " + req.target_node + " rejects the serivce request.");
+                return false;
+            }
+
+            return true;
+        }
+
+    default:
+        ROS_WARN_STREAM(ros::this_node::getName() + ": requested action is unkown.");
+        return false;
+    }
+
+    return true;
 }
 
 void callbackTimer(const ros::TimerEvent&)
@@ -52,22 +93,13 @@ void callbackTimer(const ros::TimerEvent&)
 
     msg.states.resize(_nodeIdx.size());
 
+    for (auto& node : _histories)
+        node->update();
+
     for (unsigned int i = 0; i < _nodeIdx.size(); ++i)
         msg.states[i] = _histories[i]->lastStatus().toMsg();
 
     _pubNodeStates->publish(msg);
-}
-
-void printAllNodeNames(void)
-{
-    for (const auto& node : _nodeIdx)
-        std::cout << node.first << std::endl;
-}
-
-void updateAllHistories(void)
-{
-    for (auto& node : _histories)
-        node->update();
 }
 
 int main(int argc, char** argv)
@@ -77,16 +109,8 @@ int main(int argc, char** argv)
     _pubNodeStates = std::unique_ptr<ros::Publisher>(new ros::Publisher);
     *_pubNodeStates = _nh->advertise<lifecycle_msgs::NodeStatusArray>("/lifecycle/controller/node_states", 1);
     ros::Subscriber subStatus(_nh->subscribe("/lifecycle/status", 100, nodeStatusCallback));
+    ros::ServiceServer srv(_nh->advertiseService("/lifecycle/service/controller", callbackService));
     ros::Timer timer = _nh->createTimer(ros::Duration(2.0), callbackTimer);
 
-    ros::Rate rate(1.0);
-
-    while (ros::ok())
-    {
-        updateAllHistories();
-        printAllNodeNames();
-
-        ros::spinOnce();
-        rate.sleep();
-    }
+    ros::spin();
 }

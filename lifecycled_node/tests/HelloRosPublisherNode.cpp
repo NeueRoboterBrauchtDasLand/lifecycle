@@ -1,7 +1,5 @@
 #include "HelloRosPublisherNode.h"
 
-#include <iostream>
-
 #include <std_msgs/String.h>
 
 namespace lifecycled_node {
@@ -12,51 +10,51 @@ HelloRosPublisherNode::HelloRosPublisherNode(ros::NodeHandle& privNh, ros::NodeH
     : LifecycledNode(privNh, nh),
       _nh(nh)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    ROS_INFO_STREAM(ros::this_node::getName() + __PRETTY_FUNCTION__);
     privNh.param<double>("publish_freq", _publishFreq, 1.0);
 }
 
 HelloRosPublisherNode::~HelloRosPublisherNode(void)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    ROS_INFO_STREAM(ros::this_node::getName() + __PRETTY_FUNCTION__);
 }
 
 void HelloRosPublisherNode::cleanup(void)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    ROS_INFO_STREAM(ros::this_node::getName() + __PRETTY_FUNCTION__);
     _pubHelloRos.shutdown();
 }
 
 void HelloRosPublisherNode::configure(void)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    ROS_INFO_STREAM(ros::this_node::getName() + __PRETTY_FUNCTION__);
     _pubHelloRos = _nh.advertise<std_msgs::String>("message", 1);
 }
 
 void HelloRosPublisherNode::activating(void)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-    _timer = _nh.createTimer(ros::Duration(_publishFreq), &HelloRosPublisherNode::callbackTimer, this);
+    ROS_INFO_STREAM(ros::this_node::getName() + __PRETTY_FUNCTION__);
+    _timer = _nh.createTimer(ros::Rate(_publishFreq), &HelloRosPublisherNode::callbackTimer, this);
 }
 
 void HelloRosPublisherNode::deactivating(void)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    ROS_INFO_STREAM(ros::this_node::getName() + __PRETTY_FUNCTION__);
     _timer.stop();
 }
 
 void HelloRosPublisherNode::shuttingDown(void)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    ROS_INFO_STREAM(ros::this_node::getName() + __PRETTY_FUNCTION__);
     ros::shutdown();
 }
 
 void HelloRosPublisherNode::callbackTimer(const ros::TimerEvent& event)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    ROS_INFO_STREAM(ros::this_node::getName() + __PRETTY_FUNCTION__);
     std_msgs::String msg;
 
-    msg.data = "Hello ROS!";
+    msg.data = "Hello ROS! My name is " + ros::this_node::getName();
 
     _pubHelloRos.publish(msg);
 }
