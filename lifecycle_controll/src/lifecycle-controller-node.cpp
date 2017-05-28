@@ -93,8 +93,8 @@ void callbackTimer(const ros::TimerEvent&)
 
     msg.states.resize(_nodeIdx.size());
 
-    for (auto& node : _histories)
-        node->update();
+    for (auto& history : _histories)
+        history->update();
 
     for (unsigned int i = 0; i < _nodeIdx.size(); ++i)
         msg.states[i] = _histories[i]->lastStatus().toMsg();

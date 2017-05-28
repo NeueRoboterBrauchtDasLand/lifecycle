@@ -132,6 +132,10 @@ add_executable(lifecycle-controller
   src/lifecycle-controller-node.cpp
 )
 
+add_executable(lifecycle-tool
+  src/lifecycle-tool-node.cpp
+)
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(lifecycle_controll_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -142,6 +146,11 @@ target_link_libraries(lifecycle-controll
 )
 
 target_link_libraries(lifecycle-controller
+  ${catkin_LIBRARIES}
+  lifecycle-controll
+)
+
+target_link_libraries(lifecycle-tool
   ${catkin_LIBRARIES}
   lifecycle-controll
 )
