@@ -1,5 +1,5 @@
-#ifndef ___NODE_STATUS_H___
-#define ___NODE_STATUS_H___
+#ifndef ___CPP_NODE_STATUS_H___
+#define ___CPP_NODE_STATUS_H___
 
 #include <lifecycle_msgs/NodeStatus.h>
 
@@ -22,9 +22,10 @@ public:
 
     NodeStatus(void) = default;
     NodeStatus(const ::lifecycle_msgs::NodeStatus& msg)
-        : _lifecycle(static_cast<State>(msg.lifecycle)),
+        : _stamp(msg.stamp),
           _name(msg.node_name),
-          _stamp(msg.stamp)
+	      _group(msg.group),
+          _lifecycle(static_cast<State>(msg.lifecycle))
     {
 
     }
@@ -33,6 +34,7 @@ public:
     ~NodeStatus(void) = default;
 
     const std::string& name(void) const { return _name; }
+    const std::string& group(void) const { return _group; }
     State lifecycle(void) const { return _lifecycle; }
     const ros::Time stamp(void) const { return _stamp; }
     bool isValid(void) const { return !_name.empty(); }
@@ -46,6 +48,7 @@ public:
         msg.node_name = _name;
         msg.stamp     = _stamp;
         msg.lifecycle = static_cast<std::uint8_t>(_lifecycle);
+        msg.group     = _group;
 
         return msg;
     }
@@ -72,9 +75,10 @@ public:
     }
 
 private:
-    State _lifecycle = State::UNDEFINED;
-    std::string _name;
     ros::Time _stamp;
+    std::string _name;
+    std::string _group;
+    State _lifecycle = State::UNDEFINED;
 };
 
 } // end namespace cpp

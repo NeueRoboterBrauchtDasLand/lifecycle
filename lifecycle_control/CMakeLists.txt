@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(lifecycle_controll)
+project(lifecycle_control)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -118,14 +118,14 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(lifecycle-controll
+add_library(lifecycle-control
   src/NodeHistory.cpp
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(lifecycle-controll ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(lifecycle-control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 add_executable(lifecycle-controller
@@ -141,18 +141,18 @@ add_executable(lifecycle-tool
 # add_dependencies(lifecycle_controll_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(lifecycle-controll
+target_link_libraries(lifecycle-control
   ${catkin_LIBRARIES}
 )
 
 target_link_libraries(lifecycle-controller
   ${catkin_LIBRARIES}
-  lifecycle-controll
+  lifecycle-control
 )
 
 target_link_libraries(lifecycle-tool
   ${catkin_LIBRARIES}
-  lifecycle-controll
+  lifecycle-control
 )
 
 #############
@@ -170,11 +170,11 @@ target_link_libraries(lifecycle-tool
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS lifecycle_controll lifecycle_controll_node
+install(TARGETS lifecycle-control lifecycle-controller lifecycle-tool
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/

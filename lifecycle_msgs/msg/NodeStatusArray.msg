@@ -1,1 +1,2 @@
 NodeStatus[] states
+string[] groups

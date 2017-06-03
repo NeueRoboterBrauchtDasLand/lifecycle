@@ -36,8 +36,6 @@ public:
     LifecycledNode& operator=(const LifecycledNode&) = delete;
     LifecycledNode& operator=(LifecycledNode&&)      = delete;
 
-    static std::string nodeStateName(const NodeStatus::State state);
-
 protected:
     void initializeLifecycle(ros::NodeHandle& privNh, ros::NodeHandle& nh);
 
@@ -63,6 +61,7 @@ private:
 
     double _processingFreq = 1.0;
     NodeStatus::State _nodeState;
+    std::string _nodeGroup;
 
     enum class DoExecute : std::uint8_t {
         NONE,
