@@ -50,6 +50,27 @@ public:
         return msg;
     }
 
+    static std::string stateName(const State state)
+    {
+        switch (state)
+        {
+        case State::CREATED:
+            return { "CREATED" };
+        case State::UNCONFIGURED:
+            return { "UNCONFIGURED" };
+        case State::INACTIVE:
+            return { "INACTIVE" };
+        case State::ACTIVE:
+            return { "ACTIVE" };
+        case State::FINALIZED:
+            return { "FINALIZED" };
+        case State::UNDEFINED:
+            return { "UNDEFINED" };
+        default:
+            return { "UNKOWN" };
+        }
+    }
+
 private:
     State _lifecycle = State::UNDEFINED;
     std::string _name;

@@ -3,6 +3,7 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <atomic>
 
 #include <ros/ros.h>
 
@@ -24,7 +25,8 @@ public:
         SELECT_GROUP = 'g',
         SELECT_ALL = 'a',
         CANCEL = 'c',
-        NONE
+        EXIT = 'e',
+        NONE = ' '
     };
 
     UserInterface(void)
@@ -50,13 +52,12 @@ public:
         for (unsigned int i = 0; i < msg.states.size(); ++i)
         {
             _nodeNames[i] = msg.states[i].node_name;
-            _lifecycles[i] = std::to_string(msg.states[i].lifecycle);
+            _lifecycles[i] = lifecycle_msgs::cpp::NodeStatus::stateName(static_cast<lifecycle_msgs::cpp::NodeStatus::State>(msg.states[i].lifecycle));
         }
     }
 
     Command takeCommand(void)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
         Command ret = _command;
         _command = Command::NONE;
 
@@ -79,6 +80,7 @@ private:
         std::cout << "(d) Deactivate" << std::endl;
         std::cout << "(s) Shutdown" << std::endl;
         std::cout << std::endl;
+        std::cout << "(n) None" << std::endl;
     }
 
     void printSelectOptions(void)
@@ -87,8 +89,9 @@ private:
         std::cout << "(n) Select a specific node." << std::endl;
         std::cout << "(g) Select a group of nodes." << std::endl;
         std::cout << "(a) Select all nodes." << std::endl;
+        std::cout << "(p) Print all node." << std::endl;
         std::cout << std::endl;
-        std::cout << "(c) Cancel" << std::endl;
+        std::cout << "(e) Exit" << std::endl;
         std::cout << std::endl;
     }
 
@@ -96,27 +99,38 @@ private:
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
-        std::cout << "----------------------------------------------------------------------------------" << std::endl;
-        std::cout << "| Name                                       | Lifecycle                          " << std::endl;
-        std::cout << "----------------------------------------------------------------------------------" << std::endl;
+        std::cout << "+-----+---------------------------------------------------------+-----------------+" << std::endl;
+        std::cout << "| Nr. | Name                                                    | Lifecycle       |" << std::endl;
+        std::cout << "+-----+---------------------------------------------------------+-----------------|" << std::endl;
 
         for (unsigned int i = 0; i < _nodeNames.size(); ++i)
-            std::cout << "| " << _nodeNames[i] << " | " << _lifecycles[i] << std::endl;
+        {
+            std::cout << "| " << std::setw(3) << i + 1 << " | " << std::setw(55) << _nodeNames[i] << " | ";
+            std::cout << std::setw(15) << _lifecycles[i] << " |" << std::endl;
+
+            if (i && !(i % 5))
+                std::cout << "----------------------------------------------------------------------------------" << std::endl;
+        }
 
         std::cout << "----------------------------------------------------------------------------------" << std::endl;
     }
 
     void selectTarget(void)
     {
+    	Command command;
+
         do
         {
             this->printSelectOptions();
             std::cout << "Select a target: ";
 
             char input;
+            std::cin.clear();
             std::cin >> input;
+            std::cout << std::endl << std::endl;
+            command = static_cast<Command>(input);
 
-            switch (static_cast<Command>(input))
+            switch (command)
             {
             case Command::SELECT_NODE:
 
@@ -126,7 +140,9 @@ private:
                     break;
                 }
 
-                this->selectNode();
+                if (!this->selectNode())
+                    break;
+
                 this->selectCommand();
                 break;
 
@@ -138,7 +154,13 @@ private:
                 this->selectCommand();
                 break;
 
-            case Command::CANCEL:
+            case Command::PRINT_NODES:
+                this->printNodesAsList();
+                break;
+
+            case Command::EXIT:
+                ros::shutdown();
+                std::cout << "Will exit..." << std::endl;
                 return;
 
             default:
@@ -146,10 +168,12 @@ private:
                 break;
             }
         }
-        while (_command == Command::NONE);
+        while (command == Command::NONE);
+
+        std::cout << std::endl << std::endl;
     }
 
-    void selectNode(void)
+    bool selectNode(void)
     {
         int indexNode = -1;
 
@@ -157,16 +181,21 @@ private:
         {
             std::cout << "Please select a node from the following list." << std::endl;
             this->printNodesAsList();
-            std::cout << "Select node by number (0 .. " << _nodeNames.size() - 1 << "): ";
+            std::cout << "Select node by number (1 .. " << _nodeNames.size() << " or 0 to cancel): ";
 
             std::cin >> indexNode;
         }
-        while (indexNode < 0 || indexNode >= _nodeNames.size());
+        while (indexNode < 0 || indexNode > _nodeNames.size());
 
-        _targetNode = _nodeNames[indexNode];
+        if (!indexNode)
+            return false;
+
+        _targetNode = _nodeNames[indexNode - 1];
+        std::cout << std::endl;
+        return true;
     }
 
-    void selectCommand(void)
+    bool selectCommand(void)
     {
         char input;
         Command command;
@@ -177,16 +206,20 @@ private:
             std::cout << "Select an action: ";
             std::cin >> input;
             command = static_cast<Command>(input);
+
+            if (command == static_cast<Command>('n')) // Hack here! CANCEL doesn't work here, because 'c' is already in use.
+                return false;
         }
         while (command != Command::CONFIGURE && command != Command::ACTIVATE && command != Command::DEACTIVATE &&
                command != Command::UNCONFIGURE && command != Command::SHUTDOWN);
 
         _command = command;
+        return true;
     }
 
     std::thread _thread;
     std::mutex _mutex;
-    Command _command = Command::NONE;
+    std::atomic<Command> _command{Command::NONE};
     std::vector<std::string> _nodeNames;
     std::vector<std::string> _lifecycles;
     std::string _targetNode;
