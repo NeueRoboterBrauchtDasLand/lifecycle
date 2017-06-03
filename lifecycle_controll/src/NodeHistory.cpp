@@ -27,6 +27,9 @@ void NodeHistory::cleanup(void)
 
 void NodeHistory::update(void)
 {
+    if (!_inserts.size())
+        return;
+
     if (_stats.size() + _inserts.size() > _maxStats)
     {
         const int diff = (_stats.size() + _inserts.size()) - _maxStats;
