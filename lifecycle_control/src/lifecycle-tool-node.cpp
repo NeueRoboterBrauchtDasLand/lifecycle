@@ -126,7 +126,7 @@ private:
 
         for (unsigned int i = 0; i < _groups.size(); ++i)
         {
-            std::cout << " " << std::setw(3) << i + 1 << " | " << std::setw(55) << _groups[i] << " |" << std::endl;
+            std::cout << "| " << std::setw(3) << i + 1 << " | " << std::setw(55) << _groups[i] << " |" << std::endl;
 
             if (i && !(i % 5))
                 std::cout << "+-----+---------------------------------------------------------+" << std::endl;

@@ -1,5 +1,5 @@
-#ifndef ___NODE_STATUS_H___
-#define ___NODE_STATUS_H___
+#ifndef ___CPP_NODE_STATUS_H___
+#define ___CPP_NODE_STATUS_H___
 
 #include <lifecycle_msgs/NodeStatus.h>
 
