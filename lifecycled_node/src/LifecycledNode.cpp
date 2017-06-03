@@ -20,25 +20,6 @@ LifecycledNode::~LifecycledNode(void)
     _timer.stop();
 }
 
-std::string LifecycledNode::nodeStateName(const NodeStatus::State state)
-{
-    switch (state)
-    {
-    case NodeStatus::State::CREATED:
-        return "CREATED";
-    case NodeStatus::State::UNCONFIGURED:
-        return "UNCONFIGURED";
-    case NodeStatus::State::INACTIVE:
-        return "INACTIVE";
-    case NodeStatus::State::ACTIVE:
-        return "ACTIVE";
-    case NodeStatus::State::FINALIZED:
-        return "FINALIZED";
-    default:
-         return "UNKOWN";
-    }
-}
-
 void LifecycledNode::initializeLifecycle(ros::NodeHandle& privNh, ros::NodeHandle& nh)
 {
     if (_nodeState != NodeStatus::State::CREATED)
@@ -48,6 +29,7 @@ void LifecycledNode::initializeLifecycle(ros::NodeHandle& privNh, ros::NodeHandl
     }
 
     privNh.param<double>("lifecycle_processing_freq", _processingFreq, _processingFreq);
+    privNh.param<std::string>("node_group", _nodeGroup, _nodeGroup);
 
     _pubState = nh.advertise<lifecycle_msgs::NodeStatus>("/lifecycle/status", 1);
     _srvResponser = nh.advertiseService("/lifecycle/service/" + ros::this_node::getName(),
@@ -119,6 +101,7 @@ void LifecycledNode::processLifecycle(const ros::TimerEvent& event)
 
     msg.lifecycle = static_cast<std::uint8_t>(_nodeState);
     msg.node_name = ros::this_node::getName();
+    msg.group     = _nodeGroup;
 
     _pubState.publish(msg);
 }

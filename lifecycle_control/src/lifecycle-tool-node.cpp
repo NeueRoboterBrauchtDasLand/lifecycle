@@ -48,6 +48,7 @@ public:
         std::lock_guard<std::mutex> lock(_mutex);
         _nodeNames.resize(msg.states.size());
         _lifecycles.resize(msg.states.size());
+        _groups = msg.groups;
 
         for (unsigned int i = 0; i < msg.states.size(); ++i)
         {
@@ -109,10 +110,29 @@ private:
             std::cout << std::setw(15) << _lifecycles[i] << " |" << std::endl;
 
             if (i && !(i % 5))
-                std::cout << "----------------------------------------------------------------------------------" << std::endl;
+                std::cout << "+-----+---------------------------------------------------------+-----------------+" << std::endl;
         }
 
-        std::cout << "----------------------------------------------------------------------------------" << std::endl;
+        std::cout << "+-----+---------------------------------------------------------+-----------------+" << std::endl;
+    }
+
+    void printGroupsAsList(void)
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        std::cout << "+-----+---------------------------------------------------------+" << std::endl;
+        std::cout << "| Nr. | Group                                                   |" << std::endl;
+        std::cout << "+-----+---------------------------------------------------------+" << std::endl;
+
+        for (unsigned int i = 0; i < _groups.size(); ++i)
+        {
+            std::cout << " " << std::setw(3) << i + 1 << " | " << std::setw(55) << _groups[i] << " |" << std::endl;
+
+            if (i && !(i % 5))
+                std::cout << "+-----+---------------------------------------------------------+" << std::endl;
+        }
+
+        std::cout << "+-----+---------------------------------------------------------+" << std::endl;
     }
 
     void selectTarget(void)
@@ -147,6 +167,11 @@ private:
                 break;
 
             case Command::SELECT_GROUP:
+
+                if (!this->selectGroup())
+                    break;
+
+                this->selectCommand();
                 break;
 
             case Command::SELECT_ALL:
@@ -179,7 +204,7 @@ private:
 
         do
         {
-            std::cout << "Please select a node from the following list." << std::endl;
+            std::cout << "Please select one node from the following list." << std::endl;
             this->printNodesAsList();
             std::cout << "Select node by number (1 .. " << _nodeNames.size() << " or 0 to cancel): ";
 
@@ -191,6 +216,28 @@ private:
             return false;
 
         _targetNode = _nodeNames[indexNode - 1];
+        std::cout << std::endl;
+        return true;
+    }
+
+    bool selectGroup(void)
+    {
+        int indexGroup = -1;
+
+        do
+        {
+            std::cout << "Please select one group of the following list." << std::endl;
+            this->printGroupsAsList();
+            std::cout << "Select group by number (1 .. " << _groups.size() << " or 0 to cancel): ";
+
+            std::cin >> indexGroup;
+        }
+        while (indexGroup < 0 || indexGroup > _groups.size());
+
+        if (!indexGroup)
+            return false;
+
+        _targetNode = _groups[indexGroup - 1];
         std::cout << std::endl;
         return true;
     }
@@ -222,6 +269,7 @@ private:
     std::atomic<Command> _command{Command::NONE};
     std::vector<std::string> _nodeNames;
     std::vector<std::string> _lifecycles;
+    std::vector<std::string> _groups;
     std::string _targetNode;
 };
 
