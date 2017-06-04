@@ -71,6 +71,8 @@ void LifecycledNode::onShutdown(void)
 
 void LifecycledNode::processLifecycle(const ros::TimerEvent& event)
 {
+    // TODO: maybe a console output would be nice here (changed from ... to ...).
+    // TODO: remove the on methods and put the virtual function including the switch case to a new changeLifecycle function.
     switch (_doExecute)
     {
     case DoExecute::CLEANUP:
@@ -157,8 +159,8 @@ bool LifecycledNode::processServiceRequest(lifecycle_msgs::Lifecycle::Request& r
             return true;
 
         case lifecycle_msgs::Lifecycle::Request::ACTION_SHUTDOWN:
-            this->onShutdown(); // Call immediately onShutdown(). Tested: the service call doesn't return. Need a better
-                                // solution.
+            this->onShutdown(); // Call immediately onShutdown(). Tested: the service call doesn't return. TODO: Need a
+                                // better solution.
             return true;
 
         default:
