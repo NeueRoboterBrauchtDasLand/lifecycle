@@ -4,16 +4,12 @@
 
 #include <ros/ros.h>
 
-#include <lifecycle_msgs/NodeStatusArray.h>
 #include <lifecycle_msgs/Lifecycle.h>
 #include <lifecycle_msgs/LifecycleControllerAction.h>
 
 #include "NodeHistory.h"
 
-std::map<std::string, std::size_t> _nodeIdx;
-std::map<std::string, std::vector<std::size_t>> _groupIdxs;
 std::vector<std::shared_ptr<lifecycle_controll::NodeHistory>> _histories;
-std::vector<ros::Time> _lastStatus;
 std::vector<std::shared_ptr<ros::ServiceClient>> _srvsNodeAction;
 
 std::unique_ptr<ros::NodeHandle> _nh;
