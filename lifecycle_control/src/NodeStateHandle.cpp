@@ -1,55 +1,78 @@
 #include "NodeStateHandle.h"
 
+#include <algorithm>
+
+#include <ros/ros.h>
+
 namespace lifecycle_control {
 
-void NodeStateHandle::registerEventActor(std::shared_ptr<NodeStateEventActor>& actor)
+NodeStateHandle::NodeStateHandle(std::shared_ptr<NodeStateDatabase>& database)
+    : _stateDatabase(database)
 {
 
 }
 
+void NodeStateHandle::registerEventActor(std::shared_ptr<NodeStateEventActor>& actor)
+{
+    // Check if the actor is already registered.
+    if (std::find(_eventActors.begin(), _eventActors.end(), actor) == _eventActors.end())
+    {
+        ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": this event actor is already registered. --> return");
+        return;
+    }
+
+    _eventActors.push_back(actor);
+}
+
 void NodeStateHandle::nodeStatusCallback(const lifecycle_msgs::NodeStatus& msg)
 {
-    auto index = _nodes.find(msg.node_name);
-
-    // Node name is new.
-    if (index == _nodes.end())
+    // Check if a database is set.
+    if (!_stateDatabase)
     {
-        // Add a new element to all container and insert the current status.
-        _nodes.insert(std::pair<std::string, std::size_t>(msg.node_name, _histories.size()));
+        ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": no database is set. Can't add new state. --> return");
+        return;
+    }
 
-	// TODO: move history to ...
-//        _histories.push_back(std::make_shared<lifecycle_controll::NodeHistory>());
-//        _histories.back()->insert(lifecycle_msgs::cpp::NodeStatus(msg));
-        _lastStateStamp.push_back(msg.stamp);
+    NodeStateEvent::Event event = NodeStateEvent::Event::UNDEFINED;
 
-        // Create service client for the new node. TODO: move services below to action handle.
-//        _srvsNodeAction.push_back(std::make_shared<ros::ServiceClient>());
-//        *(_srvsNodeAction.back()) = _nh->serviceClient<lifecycle_msgs::Lifecycle>("/lifecycle/service/" + msg.node_name);
+    // Select the node.
+    if (!_stateDatabase->selectNode(msg.node_name))
+    {
+        _stateDatabase->addNode(msg.node_name, msg.group);
+        event = NodeStateEvent::Event::NEW_NODE;
 
-        // TODO: create new node event.
-
-        // Check if the group is also new.
-        auto group = _groups.find(msg.group);
-
-        // Group is new. Add it to the group container.
-        if (group == _groups.end())
+        if (!_stateDatabase->selectNode(msg.node_name))
         {
-            std::vector<std::size_t> indices;
-            indices.push_back(_nodes[msg.node_name]);
-            _groups.insert(std::pair<std::string, std::vector<std::size_t>>(msg.group, indices));
-            // TODO: create new group event.
-        }
-        // Group is known. Add node index to the indices container of the group.
-        else
-        {
-            group->second.push_back(_nodes[msg.node_name]);
+            ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": added new node to database, but can't select this node. --> return");
+            return;
         }
     }
-    // Node name is known. Insert status to history and update lastStatus.
-    else
+
+    lifecycle_msgs::cpp::NodeStatus state(msg);
+
+    // If != UNDEFINED then a event was happend before.
+    if (event == NodeStateEvent::Event::UNDEFINED)
+        if (_stateDatabase->getLastState().lifecycle() != state.lifecycle())
+            event = NodeStateEvent::Event::LIFECYCLE_CHANGED;
+
+    // Add new state to the database.
+    _stateDatabase->addNodeState(state);
+
+    if (event == NodeStateEvent::Event::UNDEFINED)
+    // Call all event actors until one has accepted this event.
     {
-//        _histories[index->second]->insert(lifecycle_msgs::cpp::NodeStatus(msg)); TODO: move history.
-        _lastStateStamp[index->second] = msg.stamp;
+        NodeStateEvent nodeStateEvent(event, state);
+
+        for (auto& actor : _eventActors)
+        {
+            actor->nodeStateEvent(nodeStateEvent);
+
+            if (nodeStateEvent.isAccepted())
+                break;
+        }
+
+        if (!nodeStateEvent.isAccepted())
+            ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": node event is not accepted by any of the actors.");
     }
 }
 

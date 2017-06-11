@@ -17,7 +17,7 @@ public:
         NEW_NODE,
         LIFECYCLE_CHANGED,
         NODE_TIMEOUT
-    }
+    };
 
     NodeStateEvent(const Event event, const lifecycle_msgs::cpp::NodeStatus& nodeStatus)
         : _event(event),
@@ -26,12 +26,15 @@ public:
 
     }
 
-    Event event(void) const { return _event; }
-    const lifecycle_msgs::cpp::NodeStatus& nodeStatus(void) const { return _nodeStatus; }
+    inline Event event(void) const { return _event; }
+    inline const lifecycle_msgs::cpp::NodeStatus& nodeStatus(void) const { return _nodeStatus; }
+    inline bool isAccepted(void) const { return _accepted; }
+    inline void accept(void) { _accepted = true; }
 
 private:
     Event _event = Event::UNDEFINED;
     lifecycle_msgs::cpp::NodeStatus _nodeStatus;
+    bool _accepted = false;
 };
 
 class NodeStateEventActor : public std::enable_shared_from_this<NodeStateEventActor>

@@ -119,7 +119,9 @@ include_directories(
 
 ## Declare a C++ library
 add_library(lifecycle-control
-  src/NodeHistory.cpp
+  src/NodeStateDatabase.cpp
+  src/NodeActionHandle.cpp
+  src/NodeStateHandle.cpp
 )
 
 ## Add cmake target dependencies of the library

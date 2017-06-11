@@ -15,7 +15,7 @@ public:
         NONE = 0,
         REJECTED,
         TIMEOUT
-    }
+    };
 
     static std::string errorName(const Error error)
     {
@@ -41,6 +41,7 @@ public:
     ~NodeAction(void) = default;
 
     void process(void);
+    void process(const lifecycle_msgs::cpp::NodeStatus::State newLifecycle);
 
     inline Error error(void) const { return _error; }
     inline bool isExecuting(void) const { return _executing; }
