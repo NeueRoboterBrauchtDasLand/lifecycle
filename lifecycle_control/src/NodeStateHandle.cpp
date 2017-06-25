@@ -6,13 +6,14 @@
 
 namespace lifecycle_control {
 
-NodeStateHandle::NodeStateHandle(std::shared_ptr<NodeStateDatabase>& database)
-    : _stateDatabase(database)
+NodeStateHandle::NodeStateHandle(std::shared_ptr<NodeStateDatabase>& database, ros::NodeHandle& nh)
+    : _stateDatabase(database),
+      _timer(nh.createTimer(ros::Duration(0.1), &NodeStateHandle::timerCallback, this))
 {
 
 }
 
-void NodeStateHandle::registerEventActor(std::shared_ptr<NodeStateEventActor>& actor)
+void NodeStateHandle::registerEventActor(std::shared_ptr<NodeStateEventActor> actor)
 {
     // Check if the actor is already registered.
     if (std::find(_eventActors.begin(), _eventActors.end(), actor) == _eventActors.end())
@@ -50,29 +51,38 @@ void NodeStateHandle::nodeStatusCallback(const lifecycle_msgs::NodeStatus& msg)
 
     lifecycle_msgs::cpp::NodeStatus state(msg);
 
-    // If != UNDEFINED then a event was happend before.
+    // If event == UNDEFINED then the node is kown.
     if (event == NodeStateEvent::Event::UNDEFINED)
+    	// Check if the lifecycle of the node was changed.
         if (_stateDatabase->getLastState().lifecycle() != state.lifecycle())
             event = NodeStateEvent::Event::LIFECYCLE_CHANGED;
 
-    // Add new state to the database.
+    // Add new state of the node to the database.
     _stateDatabase->addNodeState(state);
 
-    if (event == NodeStateEvent::Event::UNDEFINED)
+    if (event != NodeStateEvent::Event::UNDEFINED)
     // Call all event actors until one has accepted this event.
     {
-        NodeStateEvent nodeStateEvent(event, state);
+        const NodeStateEvent nodeStateEvent(event, state);
 
         for (auto& actor : _eventActors)
-        {
             actor->nodeStateEvent(nodeStateEvent);
+    }
+}
 
-            if (nodeStateEvent.isAccepted())
-                break;
+void NodeStateHandle::timerCallback(const ros::TimerEvent& event)
+{
+    const auto pendingNodes(_stateDatabase->getLastStateOfPendingNodes(ros::Duration(10.0)));
+
+    if (pendingNodes.size())
+    {
+        for (const auto& node : pendingNodes)
+        {
+            const NodeStateEvent nodeStateEvent(NodeStateEvent::Event::NODE_TIMEOUT, node);
+
+            for (auto& actor : _eventActors)
+                actor->nodeStateEvent(nodeStateEvent);
         }
-
-        if (!nodeStateEvent.isAccepted())
-            ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": node event is not accepted by any of the actors.");
     }
 }
 

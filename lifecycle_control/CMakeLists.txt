@@ -122,6 +122,7 @@ add_library(lifecycle-control
   src/NodeStateDatabase.cpp
   src/NodeActionHandle.cpp
   src/NodeStateHandle.cpp
+  src/NodeAction.cpp
 )
 
 ## Add cmake target dependencies of the library

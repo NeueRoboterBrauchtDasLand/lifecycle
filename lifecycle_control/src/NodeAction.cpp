@@ -1,10 +1,10 @@
 #include "NodeAction.h"
 
-#include <lifecycle_msgs/LifecycleControllerAction.h>
+#include <lifecycle_msgs/Lifecycle.h>
 
 namespace lifecycle_control {
 
-ros::Duration NodeAction::_timeoutValue = ros::Duration("10.0");
+ros::Duration NodeAction::_timeoutValue = ros::Duration(10.0);
 
 NodeAction::NodeAction(std::shared_ptr<ros::ServiceClient> srvClien,
                        const std::string& nodeName,
@@ -28,12 +28,23 @@ void NodeAction::process(void)
     }
 }
 
+void NodeAction::process(const lifecycle_msgs::cpp::NodeStatus::State newLifecycle)
+{
+    if (!_executing)
+        return;
+
+    if (newLifecycle != _targetLifecycle)
+        _error = Error::WRONG_LIFECYCLE;
+
+    _executing = false;
+}
+
 void NodeAction::callLifecycleService(void)
 {
     lifecycle_msgs::Lifecycle msg;
 
     msg.request.action = lifecycle_msgs::Lifecycle::Request::ACTION_GO_IN_STATE;
-    msg.request.lifecycle = _targetLifecycle;
+    msg.request.lifecycle = static_cast<std::uint8_t>(_targetLifecycle);
     _stamp = ros::Time::now();
 
     if (!_srvClient->call(msg))

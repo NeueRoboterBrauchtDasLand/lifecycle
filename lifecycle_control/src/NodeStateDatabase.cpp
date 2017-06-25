@@ -24,6 +24,11 @@ bool NodeStateDatabase::selectNode(const std::string& node)
     return true;
 }
 
+bool NodeStateDatabase::existsGroup(const std::string& group) const
+{
+    return _groups.find(group) != _groups.end();
+}
+
 void NodeStateDatabase::releaseNode(void)
 {
     _selectedNodeIdx = 0;
@@ -91,6 +96,72 @@ lifecycle_msgs::cpp::NodeStatus NodeStateDatabase::getLastState(void) const
     }
 
     return *_stateIts[_selectedNodeIdx];
+}
+
+ros::Time NodeStateDatabase::getLastStateStamp(void) const
+{
+    if (_selectedNode.empty())
+    {
+        ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": no node is selected! --> return");
+        return ros::Time{};
+    }
+
+    return _lastStateStamp[_selectedNodeIdx];
+}
+
+std::vector<lifecycle_msgs::cpp::NodeStatus> NodeStateDatabase::getLastStateOfPendingNodes(const ros::Duration& timeout) const
+{
+    std::vector<lifecycle_msgs::cpp::NodeStatus> states;
+    const ros::Time currentTime(ros::Time::now());
+
+    for (unsigned int node = 0; node < _lastStateStamp.size(); ++node)
+        if (!_lastStateStamp[node].isZero() && currentTime - _lastStateStamp[node] > timeout)
+            states.push_back(*_stateIts[node]);
+
+    return states;
+}
+
+std::vector<lifecycle_msgs::cpp::NodeStatus> NodeStateDatabase::getLastStateOfNodes(void) const
+{
+    std::vector<lifecycle_msgs::cpp::NodeStatus> states(_nodes.size());
+
+    for (unsigned int node = 0; node < _stateIts.size(); ++node)
+        states[node] = *_stateIts[node];
+
+    return states;
+}
+
+std::vector<std::string> NodeStateDatabase::getNodes(void) const
+{
+    std::vector<std::string> nodes(_nodes.size());
+    auto nodesIt(nodes.begin());
+
+    for (const auto& node : _nodes)
+    {
+        *nodesIt = node.first;
+        ++nodesIt;
+    }
+
+    return nodes;
+}
+
+std::vector<std::string> NodeStateDatabase::getNodes(const std::string& group) const
+{
+    const auto groupIt(_groups.find(group));
+
+    if (groupIt == _groups.end())
+    {
+        ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": group is unkown. --> return empty container.");
+        return {};
+    }
+
+    const auto indices(groupIt->second);
+    std::vector<std::string> nodes(indices.size());
+
+    for (unsigned int i = 0; i < indices.size(); ++i)
+        nodes[i] = _stateIts[indices[i]]->name();
+
+    return nodes;
 }
 
 } // end namespace lifecycle_control

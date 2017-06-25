@@ -10,7 +10,7 @@
 
 namespace lifecycle_control {
 
-class NodeActionHandle : public NodeStateEvent
+class NodeActionHandle : public NodeStateEventActor
 {
 public:
     NodeActionHandle(std::shared_ptr<ros::NodeHandle>& nh);

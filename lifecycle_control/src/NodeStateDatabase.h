@@ -18,11 +18,18 @@ public:
     ~NodeStateDatabase(void) = default;
 
     bool selectNode(const std::string& node);
+    bool existsGroup(const std::string& group) const;
     void releaseNode(void);
     void addNode(const std::string& node, const std::string& group = std::string());
 
     void addNodeState(const lifecycle_msgs::cpp::NodeStatus& state);
     lifecycle_msgs::cpp::NodeStatus getLastState(void) const;
+    ros::Time getLastStateStamp(void) const;
+
+    std::vector<lifecycle_msgs::cpp::NodeStatus> getLastStateOfPendingNodes(const ros::Duration& timeout) const;
+    std::vector<lifecycle_msgs::cpp::NodeStatus> getLastStateOfNodes(void) const;
+    std::vector<std::string> getNodes(void) const;
+    std::vector<std::string> getNodes(const std::string& group) const;
 
     NodeStateDatabase& operator =(const NodeStateDatabase&) = delete;
     NodeStateDatabase& operator =(NodeStateDatabase&&) = default;

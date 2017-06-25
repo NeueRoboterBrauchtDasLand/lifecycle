@@ -14,7 +14,8 @@ public:
     enum class Error : std::uint8_t {
         NONE = 0,
         REJECTED,
-        TIMEOUT
+        TIMEOUT,
+        WRONG_LIFECYCLE,
     };
 
     static std::string errorName(const Error error)
@@ -27,6 +28,8 @@ public:
             return { "REJECTED" };
         case Error::TIMEOUT:
             return { "TIMEOUT" };
+        case Error::WRONG_LIFECYCLE:
+            return { "WRONG_LIFECYCLE" };
         default:
             return { "UNKNOWN" };
         }

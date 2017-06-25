@@ -1,6 +1,7 @@
 #ifndef ___NODE_STATE_HANDLE_H___
 #define ___NODE_STATE_HANDLE_H___
 
+#include <ros/ros.h>
 
 #include <lifecycle_msgs/NodeStatus.h>
 
@@ -12,20 +13,23 @@ namespace lifecycle_control {
 class NodeStateHandle
 {
 public:
-    NodeStateHandle(std::shared_ptr<NodeStateDatabase>& database);
+    NodeStateHandle(std::shared_ptr<NodeStateDatabase>& database, ros::NodeHandle& nh);
     NodeStateHandle(const NodeStateHandle&) = delete;
-    NodeStateHandle(NodeStateHandle&&) = default;
+    NodeStateHandle(NodeStateHandle&&) = delete;
     ~NodeStateHandle(void) = default;
 
-    void registerEventActor(std::shared_ptr<NodeStateEventActor>& actor);
+    void registerEventActor(std::shared_ptr<NodeStateEventActor> actor);
     void nodeStatusCallback(const lifecycle_msgs::NodeStatus& msg);
 
     NodeStateHandle& operator =(const NodeStateHandle&) = delete;
-    NodeStateHandle& operator =(NodeStateHandle&&) = default;
+    NodeStateHandle& operator =(NodeStateHandle&&) = delete;
 
 private:
+    void timerCallback(const ros::TimerEvent& event);
+
     std::shared_ptr<NodeStateDatabase> _stateDatabase;
     std::vector<std::shared_ptr<NodeStateEventActor>> _eventActors;
+    ros::Timer _timer;
 };
 
 } // end namespace lifecycle_control

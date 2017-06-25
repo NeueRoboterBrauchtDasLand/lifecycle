@@ -1,10 +1,12 @@
 #include "NodeActionHandle.h"
 
+#include <lifecycle_msgs/Lifecycle.h>
+
 namespace lifecycle_control {
 
 NodeActionHandle::NodeActionHandle(std::shared_ptr<ros::NodeHandle>& nh)
     : _nh(nh),
-      _timer(_nh->createTimer(ros::Duration(0.5), &NodeActionHandle::callbackTimer, this)
+      _timer(_nh->createTimer(ros::Duration(0.5), &NodeActionHandle::callbackTimer, this))
 {
 
 }
@@ -16,7 +18,7 @@ bool NodeActionHandle::createAction(const std::string& node, const lifecycle_msg
     if (actionIt == _actions.end())
     {
         ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": the node '" << node
-                         << "' has an active action. Can't create an additional action. --> return."):
+                         << "' has an active action. Can't create an additional action. --> return.");
         return false;
     }
 
@@ -32,9 +34,9 @@ void NodeActionHandle::nodeStateEvent(const NodeStateEvent& event)
         {
             std::shared_ptr<ros::ServiceClient> client = std::make_shared<ros::ServiceClient>();
             *client = _nh->serviceClient<lifecycle_msgs::Lifecycle>("/lifecycle/service/" + event.nodeStatus().name());
-            _srvsNodeAction.insert(std::pair<std::string, std::shared_ptr<ros::ServiceClient>>(event.nodeStatus().name()));
+            _srvsNodeAction.insert(std::pair<std::string, std::shared_ptr<ros::ServiceClient>>(event.nodeStatus().name(),
+                                                                                               client));
         }
-        event->accept();
         break;
 
     case NodeStateEvent::Event::LIFECYCLE_CHANGED:
