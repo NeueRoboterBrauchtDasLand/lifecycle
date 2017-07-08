@@ -30,6 +30,7 @@ public:
     std::vector<lifecycle_msgs::cpp::NodeStatus> getLastStateOfNodes(void) const;
     std::vector<std::string> getNodes(void) const;
     std::vector<std::string> getNodes(const std::string& group) const;
+    std::vector<std::string> getGroups(void) const;
 
     NodeStateDatabase& operator =(const NodeStateDatabase&) = delete;
     NodeStateDatabase& operator =(NodeStateDatabase&&) = default;

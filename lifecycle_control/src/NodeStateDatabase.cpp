@@ -164,4 +164,15 @@ std::vector<std::string> NodeStateDatabase::getNodes(const std::string& group) c
     return nodes;
 }
 
+std::vector<std::string> NodeStateDatabase::getGroups(void) const
+{
+    std::vector<std::string> groups(_groups.size());
+    const auto _groupsIt(_groups.begin());
+
+    for (auto& group : groups)
+        group = _groupsIt->first;
+
+    return groups;
+}
+
 } // end namespace lifecycle_control

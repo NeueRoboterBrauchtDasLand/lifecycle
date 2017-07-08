@@ -15,7 +15,7 @@ bool NodeActionHandle::createAction(const std::string& node, const lifecycle_msg
 {
     const auto actionIt = _actions.find(node);
 
-    if (actionIt == _actions.end())
+    if (actionIt != _actions.end())
     {
         ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": the node '" << node
                          << "' has an active action. Can't create an additional action. --> return.");
@@ -59,6 +59,8 @@ void NodeActionHandle::nodeStateEvent(const NodeStateEvent& event)
 
 void NodeActionHandle::callbackTimer(const ros::TimerEvent& event)
 {
+
+
     for (auto& action : _actions)
         action.second.process();
 

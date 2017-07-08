@@ -16,7 +16,7 @@ NodeStateHandle::NodeStateHandle(std::shared_ptr<NodeStateDatabase>& database, r
 void NodeStateHandle::registerEventActor(std::shared_ptr<NodeStateEventActor> actor)
 {
     // Check if the actor is already registered.
-    if (std::find(_eventActors.begin(), _eventActors.end(), actor) == _eventActors.end())
+    if (std::find(_eventActors.begin(), _eventActors.end(), actor) != _eventActors.end())
     {
         ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": this event actor is already registered. --> return");
         return;

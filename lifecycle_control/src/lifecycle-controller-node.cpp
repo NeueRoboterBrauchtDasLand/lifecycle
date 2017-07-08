@@ -60,6 +60,13 @@ bool callbackService(lifecycle_msgs::LifecycleControllerAction::Request& req,
 void callbackTimer(const ros::TimerEvent&)
 {
     lifecycle_msgs::NodeStatusArray msg;
+    const auto lastStates(_nodeStateDatabase->getLastStateOfNodes());
+
+    msg.groups = _nodeStateDatabase->getGroups();
+    msg.states.resize(lastStates.size());
+
+    for (unsigned int i = 0; i < lastStates.size(); ++i)
+        msg.states[i] = lastStates[i].toMsg();
 
     _pubNodeStates->publish(msg);
 }
