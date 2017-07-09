@@ -7,12 +7,14 @@
 #include <lifecycle_msgs/Lifecycle.h>
 #include <lifecycle_msgs/LifecycleControllerAction.h>
 #include <lifecycle_msgs/NodeStatusArray.h>
+#include <lifecycle_msgs/NodeActionArray.h>
 
 #include "NodeStateHandle.h"
 #include "NodeActionHandle.h"
 
 std::shared_ptr<ros::NodeHandle> _nh;
 std::unique_ptr<ros::Publisher> _pubNodeStates;
+std::unique_ptr<ros::Publisher> _pubNodeActions;
 
 std::shared_ptr<lifecycle_control::NodeStateHandle> _nodeStateHandler;
 std::shared_ptr<lifecycle_control::NodeStateDatabase> _nodeStateDatabase;
@@ -59,16 +61,29 @@ bool callbackService(lifecycle_msgs::LifecycleControllerAction::Request& req,
 
 void callbackTimer(const ros::TimerEvent&)
 {
-    lifecycle_msgs::NodeStatusArray msg;
-    const auto lastStates(_nodeStateDatabase->getLastStateOfNodes());
+    {
+        lifecycle_msgs::NodeStatusArray msg;
+        const auto lastStates(_nodeStateDatabase->getLastStateOfNodes());
 
-    msg.groups = _nodeStateDatabase->getGroups();
-    msg.states.resize(lastStates.size());
+        msg.groups = _nodeStateDatabase->getGroups();
+        msg.states.resize(lastStates.size());
 
-    for (unsigned int i = 0; i < lastStates.size(); ++i)
-        msg.states[i] = lastStates[i].toMsg();
+        for (unsigned int i = 0; i < lastStates.size(); ++i)
+            msg.states[i] = lastStates[i].toMsg();
 
-    _pubNodeStates->publish(msg);
+        _pubNodeStates->publish(msg);
+    }
+
+    {
+        lifecycle_msgs::NodeActionArray msg;
+        const auto actions(_nodeActionHandler->allActions());
+        msg.actions.resize(actions.size());
+
+        for (unsigned int i = 0; i < actions.size(); ++i)
+            msg.actions[i] = actions[i].toMsg();
+
+        _pubNodeActions->publish(msg);
+    }
 }
 
 int main(int argc, char** argv)
@@ -78,6 +93,8 @@ int main(int argc, char** argv)
     _nh = std::make_shared<ros::NodeHandle>();
     _pubNodeStates = std::unique_ptr<ros::Publisher>(new ros::Publisher);
     *_pubNodeStates = _nh->advertise<lifecycle_msgs::NodeStatusArray>("/lifecycle/controller/node_states", 1);
+    _pubNodeActions = std::unique_ptr<ros::Publisher>(new ros::Publisher);
+    *_pubNodeActions = _nh->advertise<lifecycle_msgs::NodeActionArray>("/lifecycle/controller/node_actions", 10);
 
     _nodeStateDatabase = std::make_shared<lifecycle_control::NodeStateDatabase>(300);
     _nodeStateHandler = std::make_shared<lifecycle_control::NodeStateHandle>(_nodeStateDatabase, *_nh);

@@ -3,8 +3,8 @@
 
 #include <ros/ros.h>
 
-#include "lifecycle_msgs/cpp/NodeStatus.h"
-#include "lifecycle_msgs/Lifecycle.h"
+#include "lifecycled_node/NodeStateMachine.h"
+#include <lifecycle_msgs/Lifecycle.h>
 
 namespace lifecycled_node {
 
@@ -60,7 +60,7 @@ private:
     ros::Publisher _pubState;
 
     double _processingFreq = 1.0;
-    NodeStatus::State _nodeState;
+    NodeStateMachine _stateMachine{NodeStatus::State::CREATED};
     std::string _nodeGroup;
 
     enum class DoExecute : std::uint8_t {

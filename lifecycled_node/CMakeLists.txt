@@ -120,6 +120,7 @@ include_directories(
 ## Declare a C++ library
 add_library(lifecycled-node
   src/LifecycledNode.cpp
+  src/NodeStateMachine.cpp
 )
 
 ## Add cmake target dependencies of the library

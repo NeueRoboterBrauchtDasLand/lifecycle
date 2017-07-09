@@ -48,6 +48,7 @@ add_message_files(
   NodeStatus.msg
   NodeStatusArray.msg
   NodeAction.msg
+  NodeActionArray.msg
 )
 
 ## Generate services in the 'srv' folder
