@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 
-#include "lifecycle_msgs/CppNodeStatus.h"
+#include "lifecycle_msgs/cpp/NodeStatus.h"
 #include "lifecycle_msgs/Lifecycle.h"
 
 namespace lifecycled_node {

@@ -9,7 +9,7 @@
 
 #include <lifecycle_msgs/LifecycleControllerAction.h>
 #include <lifecycle_msgs/NodeStatusArray.h>
-#include <lifecycle_msgs/CppNodeStatus.h>
+#include <lifecycle_msgs/cpp/NodeStatus.h>
 
 class UserInterface
 {

@@ -3,7 +3,8 @@
 
 #include <ros/ros.h>
 
-#include <lifecycle_msgs/CppNodeStatus.h>
+#include <lifecycle_msgs/cpp/NodeStatus.h>
+#include <lifecycle_msgs/NodeAction.h>
 
 namespace lifecycle_control {
 
@@ -39,6 +40,8 @@ public:
     NodeAction(std::shared_ptr<ros::ServiceClient> srvClien,
                const std::string& nodeName,
                const lifecycle_msgs::cpp::NodeStatus::State targetLifecycle);
+    NodeAction(const lifecycle_msgs::NodeAction& msg);
+
     NodeAction(const NodeAction&) = default;
     NodeAction(NodeAction&&) = default;
     ~NodeAction(void) = default;
@@ -48,6 +51,8 @@ public:
 
     inline Error error(void) const { return _error; }
     inline bool isExecuting(void) const { return _executing; }
+
+    lifecycle_msgs::NodeAction toMsg(void) const;
 
     NodeAction& operator =(const NodeAction&) = default;
     NodeAction& operator =(NodeAction&&) = default;

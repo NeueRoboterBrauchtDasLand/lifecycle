@@ -16,6 +16,16 @@ NodeAction::NodeAction(std::shared_ptr<ros::ServiceClient> srvClien,
     this->callLifecycleService();
 }
 
+NodeAction::NodeAction(const lifecycle_msgs::NodeAction& msg)
+    : _node(msg.node_name),
+      _targetLifecycle(static_cast<lifecycle_msgs::cpp::NodeStatus::State>(msg.target_lifecycle)),
+      _stamp(msg.stamp),
+      _executing(msg.executing),
+      _error(static_cast<Error>(msg.error))
+{
+
+}
+
 void NodeAction::process(void)
 {
     if (!_executing)
@@ -37,6 +47,19 @@ void NodeAction::process(const lifecycle_msgs::cpp::NodeStatus::State newLifecyc
         _error = Error::WRONG_LIFECYCLE;
 
     _executing = false;
+}
+
+lifecycle_msgs::NodeAction NodeAction::toMsg(void) const
+{
+    lifecycle_msgs::NodeAction msg;
+
+    msg.node_name = _node;
+    msg.target_lifecycle = static_cast<std::uint8_t>(_targetLifecycle);
+    msg.stamp = _stamp;
+    msg.executing = _executing;
+    msg.error = static_cast<std::uint8_t>(_error);
+
+    return msg;
 }
 
 void NodeAction::callLifecycleService(void)

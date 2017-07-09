@@ -2,6 +2,7 @@
 #define ___NODE_ACTION_HANDLE_H___
 
 #include <map>
+#include <vector>
 
 #include <ros/ros.h>
 
@@ -19,6 +20,7 @@ public:
     ~NodeActionHandle(void) = default;
 
     bool createAction(const std::string& node, const lifecycle_msgs::cpp::NodeStatus::State targetLifecycle);
+    std::vector<NodeAction> allActions(void) const;
 
     virtual void nodeStateEvent(const NodeStateEvent& event);
 

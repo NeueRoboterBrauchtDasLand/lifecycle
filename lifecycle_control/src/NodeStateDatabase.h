@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-#include <lifecycle_msgs/CppNodeStatus.h>
+#include <lifecycle_msgs/cpp/NodeStatus.h>
 
 namespace lifecycle_control {
 

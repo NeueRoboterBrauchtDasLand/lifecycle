@@ -26,6 +26,20 @@ bool NodeActionHandle::createAction(const std::string& node, const lifecycle_msg
     return true;
 }
 
+std::vector<NodeAction> NodeActionHandle::allActions(void) const
+{
+    std::vector<NodeAction> actions(_actions.size());
+    auto actionIt = actions.begin();
+
+    for (const auto& actionMapIt : _actions)
+    {
+        *actionIt = actionMapIt.second;
+        ++actionIt;
+    }
+
+    return actions;
+}
+
 void NodeActionHandle::nodeStateEvent(const NodeStateEvent& event)
 {
     switch (event.event())
@@ -59,12 +73,8 @@ void NodeActionHandle::nodeStateEvent(const NodeStateEvent& event)
 
 void NodeActionHandle::callbackTimer(const ros::TimerEvent& event)
 {
-
-
     for (auto& action : _actions)
         action.second.process();
-
-    //TODO Check if a error is occurred inside a action. Trigger an error handling that has to be implemented.
 }
 
 } // end namespace lifecycle_control
