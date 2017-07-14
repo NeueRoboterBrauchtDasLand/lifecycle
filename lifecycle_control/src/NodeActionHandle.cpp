@@ -15,14 +15,31 @@ bool NodeActionHandle::createAction(const std::string& node, const lifecycle_msg
 {
     const auto actionIt = _actions.find(node);
 
-    if (actionIt != _actions.end())
+    if (actionIt == _actions.end())
+    // Inser the new node and create an action.
+    {
+        _actions.insert(std::pair<std::string, NodeAction>(node, NodeAction(_srvsNodeAction[node], node, targetLifecycle)));
+        return true;
+    }
+
+    if (actionIt->second.isExecuting())
+    // An action is still processing.
     {
         ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": the node '" << node
                          << "' has an active action. Can't create an additional action. --> return.");
         return false;
     }
 
-    _actions.insert(std::pair<std::string, NodeAction>(node, NodeAction(_srvsNodeAction[node], node, targetLifecycle)));
+    // Override the old action with a new created one.
+    actionIt->second = NodeAction{_srvsNodeAction[node], node, targetLifecycle};
+
+    if (actionIt->second.error() != NodeAction::Error::NONE)
+    {
+        ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": the node '" << node
+                         << "' rejected the lifecycle change request. --> return.");
+        return false;
+    }
+
     return true;
 }
 

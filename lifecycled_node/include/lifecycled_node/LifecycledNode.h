@@ -60,7 +60,7 @@ private:
     ros::Publisher _pubState;
 
     double _processingFreq = 1.0;
-    NodeStateMachine _stateMachine{NodeStatus::State::CREATED};
+    NodeStateMachine _stateMachine{NodeStatus::State::NONE};
     std::string _nodeGroup;
 
     enum class DoExecute : std::uint8_t {

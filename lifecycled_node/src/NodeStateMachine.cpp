@@ -12,8 +12,11 @@ bool NodeStateMachine::canChangeTo(const State to) const
 {
     switch (to)
     {
+    case State::CREATED:
+        return _currentState == State::NONE;
+
     case State::UNCONFIGURED:
-        return _currentState == State::INACTIVE;
+        return _currentState == State::CREATED || _currentState == State::INACTIVE;
 
     case State::INACTIVE:
         return _currentState == State::UNCONFIGURED || _currentState == State::ACTIVE;
@@ -22,8 +25,8 @@ bool NodeStateMachine::canChangeTo(const State to) const
         return _currentState == State::INACTIVE;
 
     case State::FINALIZED:
-        return _currentState == State::UNCONFIGURED || _currentState == State::INACTIVE ||
-               _currentState == State::ACTIVE;
+        return  _currentState == State::CREATED || _currentState == State::UNCONFIGURED ||
+                _currentState == State::INACTIVE || _currentState == State::ACTIVE;
 
     default:
         return false;

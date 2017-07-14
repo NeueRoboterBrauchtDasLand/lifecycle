@@ -10,7 +10,7 @@ class NodeStateMachine
 using State = lifecycle_msgs::cpp::NodeStatus::State;
 
 public:
-    NodeStateMachine(const State initialState = State::CREATED);
+    NodeStateMachine(const State initialState = State::NONE);
     NodeStateMachine(const NodeStateMachine&) = default;
     NodeStateMachine(NodeStateMachine&&) = default;
     ~NodeStateMachine(void) = default;
