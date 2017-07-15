@@ -109,6 +109,8 @@ catkin_package(
 ## Build ##
 ###########
 
+set(CMAKE_CXX_FLAGS "-std=c++0x -O2 ${CMAKE_CXX_FLAGS}")
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
@@ -120,6 +122,7 @@ include_directories(
 ## Declare a C++ library
 add_library(lifecycled-node
   src/LifecycledNode.cpp
+  src/NodeStateMachine.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -186,10 +189,11 @@ install(TARGETS lifecycled-node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_lifecycled_node.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+catkin_add_gtest(unit-state-machine-test test/unit-test-node-state-machine.cpp)
+
+if(TARGET unit-state-machine-test)
+  target_link_libraries(unit-state-machine-test lifecycled-node)
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

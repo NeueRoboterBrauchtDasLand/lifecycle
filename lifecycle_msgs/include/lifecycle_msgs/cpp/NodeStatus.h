@@ -12,7 +12,8 @@ class NodeStatus
 public:
 
     enum class State : std::uint8_t {
-        CREATED = 0,
+        NONE,
+        CREATED,
         UNCONFIGURED,
         INACTIVE,
         ACTIVE,
@@ -57,6 +58,8 @@ public:
     {
         switch (state)
         {
+        case State::NONE:
+            return { "NONE" };
         case State::CREATED:
             return { "CREATED" };
         case State::UNCONFIGURED:

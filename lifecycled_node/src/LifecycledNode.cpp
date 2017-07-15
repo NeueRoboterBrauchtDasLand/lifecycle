@@ -4,14 +4,26 @@
 
 namespace lifecycled_node {
 
+inline void WARN(const std::string& msg)
+{
+    ROS_WARN_STREAM(ros::this_node::getName() + msg);
+}
+
+inline void ERROR(const std::string& msg)
+{
+    ROS_ERROR_STREAM(ros::this_node::getName() + ": " + msg);
+}
+
 LifecycledNode::LifecycledNode(void)
 {
-    _nodeState = NodeStatus::State::CREATED;
+    if (!_stateMachine.changeTo(NodeStatus::State::CREATED))
+        ERROR("Can't change to lifecycle state CREATED. This must never happen! BUG!!!");
 }
 
 LifecycledNode::LifecycledNode(ros::NodeHandle& privNh, ros::NodeHandle& nh)
 {
-    _nodeState = NodeStatus::State::CREATED;
+    if (!_stateMachine.changeTo(NodeStatus::State::CREATED))
+        ERROR("Can't change to lifecycle state CREATED. This must never happen! BUG!!!");
     this->initializeLifecycle(privNh, nh);
 }
 
@@ -22,9 +34,9 @@ LifecycledNode::~LifecycledNode(void)
 
 void LifecycledNode::initializeLifecycle(ros::NodeHandle& privNh, ros::NodeHandle& nh)
 {
-    if (_nodeState != NodeStatus::State::CREATED)
+    if (_stateMachine.currentState() != NodeStatus::State::CREATED)
     {
-        ROS_WARN_STREAM(ros::this_node::getName() + " is already initialized. --> Do nothing and return.");
+        WARN(" is already initialized. --> Do nothing and return.");
         return;
     }
 
@@ -36,37 +48,49 @@ void LifecycledNode::initializeLifecycle(ros::NodeHandle& privNh, ros::NodeHandl
                                         &LifecycledNode::processServiceRequest,
                                         this);
     _timer = nh.createTimer(ros::Rate(_processingFreq), &LifecycledNode::processLifecycle, this);
-    _nodeState = NodeStatus::NodeStatus::State::UNCONFIGURED;
+
+    if (!_stateMachine.changeTo(NodeStatus::State::UNCONFIGURED))
+        ERROR("Can't change to lifecycle state UNCONFIGURED. This must never happen! BUG!!!");
 }
 
 void LifecycledNode::onCleanup(void)
 {
     this->cleanup();
-    _nodeState = NodeStatus::State::UNCONFIGURED;
+
+    if (!_stateMachine.changeTo(NodeStatus::State::UNCONFIGURED))
+        ERROR("Can't change to lifecycle state UNCONFIGURED. This must never happen! BUG!!!");
 }
 
 void LifecycledNode::onConfigure(void)
 {
     this->configure();
-    _nodeState = NodeStatus::State::INACTIVE;
+
+    if (!_stateMachine.changeTo(NodeStatus::State::INACTIVE))
+        ERROR("Can't change to lifecycle state INACTIVE. This must never happen! BUG!!!");
 }
 
 void LifecycledNode::onActivating(void)
 {
     this->activating();
-    _nodeState = NodeStatus::State::ACTIVE;
+
+    if (!_stateMachine.changeTo(NodeStatus::State::ACTIVE))
+        ERROR("Can't change to lifecycle state ACTIVE. This must never happen! BUG!!!");
 }
 
 void LifecycledNode::onDeactivating(void)
 {
     this->deactivating();
-    _nodeState = NodeStatus::State::INACTIVE;
+
+    if (!_stateMachine.changeTo(NodeStatus::State::INACTIVE))
+        ERROR("Can't change to lifecycle state INACTIVE. This must never happen! BUG!!!");
 }
 
 void LifecycledNode::onShutdown(void)
 {
     this->shuttingDown();
-    _nodeState = NodeStatus::State::FINALIZED;
+
+    if (!_stateMachine.changeTo(NodeStatus::State::FINALIZED))
+        ERROR("Can't change to lifecycle state FINALIZED. This must never happen! BUG!!!");
 }
 
 void LifecycledNode::processLifecycle(const ros::TimerEvent& event)
@@ -101,7 +125,7 @@ void LifecycledNode::processLifecycle(const ros::TimerEvent& event)
     // Publish current node status.
     lifecycle_msgs::NodeStatus msg;
 
-    msg.lifecycle = static_cast<std::uint8_t>(_nodeState);
+    msg.lifecycle = static_cast<std::uint8_t>(_stateMachine.currentState());
     msg.node_name = ros::this_node::getName();
     msg.group     = _nodeGroup;
 
@@ -110,7 +134,7 @@ void LifecycledNode::processLifecycle(const ros::TimerEvent& event)
 
 bool LifecycledNode::processServiceRequest(lifecycle_msgs::Lifecycle::Request& req, lifecycle_msgs::Lifecycle::Response& res)
 {
-    res.lifecycle = static_cast<std::uint8_t>(_nodeState);
+    res.lifecycle = static_cast<std::uint8_t>(_stateMachine.currentState());
 
     switch (req.action)
     {
@@ -122,16 +146,25 @@ bool LifecycledNode::processServiceRequest(lifecycle_msgs::Lifecycle::Request& r
             switch (static_cast<NodeStatus::State>(req.lifecycle))
             {
             case NodeStatus::State::UNCONFIGURED:
-                if (_nodeState != NodeStatus::State::INACTIVE)
+                if (!_stateMachine.canChangeTo(NodeStatus::State::UNCONFIGURED))
+                {
+                    WARN("Can't change in lifecycle state '" + NodeStatus::stateName(NodeStatus::State::UNCONFIGURED));
                     return false;
+                }
 
                 _doExecute = DoExecute::CLEANUP;
                 return true;
 
             case NodeStatus::State::INACTIVE:
-                if (_nodeState == NodeStatus::State::UNCONFIGURED)
+                if (!_stateMachine.canChangeTo(NodeStatus::State::INACTIVE))
+                {
+                    WARN("Can't change in lifecycle state '" + NodeStatus::stateName(NodeStatus::State::INACTIVE));
+                    return false;
+                }
+
+                if (_stateMachine.currentState() == NodeStatus::State::UNCONFIGURED)
                     _doExecute = DoExecute::CONFIGURE;
-                else if (_nodeState == NodeStatus::State::ACTIVE)
+                else if (_stateMachine.currentState() == NodeStatus::State::ACTIVE)
                     _doExecute = DoExecute::DEACTIVATE;
                 else
                     return false;
@@ -139,15 +172,21 @@ bool LifecycledNode::processServiceRequest(lifecycle_msgs::Lifecycle::Request& r
                 return true;
 
             case NodeStatus::State::ACTIVE:
-                if (_nodeState != NodeStatus::State::INACTIVE)
+                if (!_stateMachine.canChangeTo(NodeStatus::State::ACTIVE))
+                {
+                    WARN("Can't change in lifecycle state '" + NodeStatus::stateName(NodeStatus::State::ACTIVE));
                     return false;
+                }
 
                 _doExecute = DoExecute::ACTIVATE;
                 return true;
 
             case NodeStatus::State::FINALIZED:
-                if (_nodeState != NodeStatus::State::UNCONFIGURED && _nodeState != NodeStatus::State::INACTIVE && _nodeState != NodeStatus::State::ACTIVE)
+                if (!_stateMachine.canChangeTo(NodeStatus::State::FINALIZED))
+                {
+                    WARN("Can't change in lifecycle state '" + NodeStatus::stateName(NodeStatus::State::FINALIZED));
                     return false;
+                }
 
                 _doExecute = DoExecute::SHUTDOWN;
                 return true;

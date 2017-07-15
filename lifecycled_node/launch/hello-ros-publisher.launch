@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <launch>
-    <node name="publisher_0" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_0" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_a" />
     </node>
-    <node name="publisher_1" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_1" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_a" />
     </node>
-    <node name="publisher_2" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_2" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_a" />
     </node>
-    <node name="publisher_3" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_3" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_a" />
     </node>
-    <node name="publisher_4" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_4" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_a" />
     </node>
-    <node name="publisher_5" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_5" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_b" />
     </node>
-    <node name="publisher_6" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_6" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_b" />
     </node>
-    <node name="publisher_7" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_7" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_b" />
     </node>
-    <node name="publisher_8" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_8" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_b" />
     </node>
-    <node name="publisher_9" pkg="lifecycled_node" type="hello-ros-publisher">
+    <node name="publisher_9" pkg="lifecycled_node" type="hello-ros-publisher" output="screen">
         <param name="publish_freq" type="double" value="0.5" />
         <param name="node_group"   type="string" value="group_b" />
     </node>

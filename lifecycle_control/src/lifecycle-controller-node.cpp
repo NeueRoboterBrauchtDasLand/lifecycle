@@ -4,115 +4,52 @@
 
 #include <ros/ros.h>
 
-#include <lifecycle_msgs/NodeStatusArray.h>
 #include <lifecycle_msgs/Lifecycle.h>
 #include <lifecycle_msgs/LifecycleControllerAction.h>
+#include <lifecycle_msgs/NodeStatusArray.h>
+#include <lifecycle_msgs/NodeActionArray.h>
 
-#include "NodeHistory.h"
+#include "NodeStateHandle.h"
+#include "NodeActionHandle.h"
 
-std::map<std::string, std::size_t> _nodeIdx;
-std::map<std::string, std::vector<std::size_t>> _groupIdxs;
-std::vector<std::shared_ptr<lifecycle_controll::NodeHistory>> _histories;
-std::vector<ros::Time> _lastStatus;
-std::vector<std::shared_ptr<ros::ServiceClient>> _srvsNodeAction;
-
-std::unique_ptr<ros::NodeHandle> _nh;
+std::shared_ptr<ros::NodeHandle> _nh;
 std::unique_ptr<ros::Publisher> _pubNodeStates;
+std::unique_ptr<ros::Publisher> _pubNodeActions;
 
-void nodeStatusCallback(const lifecycle_msgs::NodeStatus& msg)
-{
-    auto index = _nodeIdx.find(msg.node_name);
+std::shared_ptr<lifecycle_control::NodeStateHandle> _nodeStateHandler;
+std::shared_ptr<lifecycle_control::NodeStateDatabase> _nodeStateDatabase;
+std::shared_ptr<lifecycle_control::NodeActionHandle> _nodeActionHandler;
 
-    // Node name is new.
-    if (index == _nodeIdx.end())
-    {
-        // Add a new element to all container and insert the current status.
-        _nodeIdx.insert(std::pair<std::string, std::size_t>(msg.node_name, _histories.size()));
-
-        _histories.push_back(std::make_shared<lifecycle_controll::NodeHistory>());
-        _histories.back()->insert(lifecycle_msgs::cpp::NodeStatus(msg));
-        _lastStatus.push_back(msg.stamp);
-
-        // Create service client for the new node.
-        _srvsNodeAction.push_back(std::make_shared<ros::ServiceClient>());
-        *(_srvsNodeAction.back()) = _nh->serviceClient<lifecycle_msgs::Lifecycle>("/lifecycle/service/" + msg.node_name);
-
-        // Check if the group is also new.
-        auto groupIt = _groupIdxs.find(msg.group);
-
-        // Group is new. Add it to the group container.
-        if (groupIt == _groupIdxs.end())
-        {
-            std::vector<std::size_t> indices;
-            indices.push_back(_nodeIdx[msg.node_name]);
-            _groupIdxs.insert(std::pair<std::string, std::vector<std::size_t>>(msg.group, indices));
-        }
-        // Group is known. Add node index to the indices container of the group.
-        else
-        {
-            groupIt->second.push_back(_nodeIdx[msg.node_name]);
-        }
-    }
-    // Node name is known. Insert status to history and update lastStatus.
-    else
-    {
-        _histories[index->second]->insert(lifecycle_msgs::cpp::NodeStatus(msg));
-        _lastStatus[index->second] = msg.stamp;
-    }
-}
-
-// TODO: Add timeout functionality for the node service calls. Add error flags to the node status msg for indicating a timeout.
 bool callbackService(lifecycle_msgs::LifecycleControllerAction::Request& req,
                      lifecycle_msgs::LifecycleControllerAction::Response& res)
 {
     switch (req.action)
     {
     case lifecycle_msgs::LifecycleControllerAction::Request::ACTION_CHANGE_LIFECYCLE:
+
+        // broadcast addresses all nodes. Once a serice call is rejected this request will also be rejected.
+        if (req.target_node == "broadcast")
         {
-            const auto index   = _nodeIdx.find(req.target_node);
-            const auto groupIt = _groupIdxs.find(req.target_node);
-
-            // Check if target_node is valid.
-            if (req.target_node != "broadcast" && index == _nodeIdx.end() && groupIt == _groupIdxs.end())
-            {
-                ROS_ERROR_STREAM(ros::this_node::getName() + ": target node " + req.target_node + " unkown.");
-                return false;
-            }
-
-            lifecycle_msgs::Lifecycle msg;
-
-            msg.request.action = lifecycle_msgs::Lifecycle::Request::ACTION_GO_IN_STATE;
-            msg.request.lifecycle = req.target_lifecycle;
-
-            // broadcast addresses all nodes. Once a serice call is rejected this request will also be rejected.
-            if (req.target_node == "broadcast")
-            {
-                bool ret = true;
-
-                for (auto& client : _srvsNodeAction)
-                    ret &= client->call(msg);
-
-                return ret;
-            }
-            // Check a group is the target. Once a serice call is rejected this request will also be rejected.
-            else if (groupIt != _groupIdxs.end())
-            {
-                bool ret = true;
-
-                for (const auto& nodeIdx : groupIt->second)
-                    ret &= _srvsNodeAction[nodeIdx]->call(msg);
-
-                return ret;
-            }
-            // Call the target node's lifecycle service with the requested action (lifecycle change).
-            else if (!_srvsNodeAction[index->second]->call(msg))
-            {
-                ROS_ERROR_STREAM(ros::this_node::getName() + ": node '" + req.target_node + "' rejects the serivce request.");
-                return false;
-            }
-
-            return true;
+            for (const auto& node : _nodeStateDatabase->getNodes())
+                _nodeActionHandler->createAction(node, static_cast<lifecycle_msgs::cpp::NodeStatus::State>(req.target_lifecycle));
         }
+        // Check a group is the target. Once a serice call is rejected this request will also be rejected.
+        else if (_nodeStateDatabase->existsGroup(req.target_node))
+        {
+            for (const auto& node : _nodeStateDatabase->getNodes(req.target_node))
+                _nodeActionHandler->createAction(node, static_cast<lifecycle_msgs::cpp::NodeStatus::State>(req.target_lifecycle));
+        }
+        // Call the target node's lifecycle service with the requested action (lifecycle change).
+        else if (_nodeStateDatabase->selectNode(req.target_node))
+        {
+            _nodeActionHandler->createAction(req.target_node, static_cast<lifecycle_msgs::cpp::NodeStatus::State>(req.target_lifecycle));
+        }
+        else
+        {
+            ROS_ERROR_STREAM(ros::this_node::getName() + ": target is unkown. --> reject service.");
+            return false;
+        }
+    break;
 
     default:
         ROS_WARN_STREAM(ros::this_node::getName() + ": requested action is unkown.");
@@ -124,30 +61,51 @@ bool callbackService(lifecycle_msgs::LifecycleControllerAction::Request& req,
 
 void callbackTimer(const ros::TimerEvent&)
 {
-    lifecycle_msgs::NodeStatusArray msg;
+    {
+        lifecycle_msgs::NodeStatusArray msg;
+        const auto lastStates(_nodeStateDatabase->getLastStateOfNodes());
 
-    msg.states.resize(_nodeIdx.size());
+        msg.groups = _nodeStateDatabase->getGroups();
+        msg.states.resize(lastStates.size());
 
-    for (auto& history : _histories)
-        history->update();
+        for (unsigned int i = 0; i < lastStates.size(); ++i)
+            msg.states[i] = lastStates[i].toMsg();
 
-    for (unsigned int i = 0; i < _nodeIdx.size(); ++i)
-        msg.states[i] = _histories[i]->lastStatus().toMsg();
+        _pubNodeStates->publish(msg);
+    }
 
-    for (const auto& groupIt : _groupIdxs)
-        msg.groups.push_back(groupIt.first);
+    {
+        lifecycle_msgs::NodeActionArray msg;
+        const auto actions(_nodeActionHandler->allActions());
+        msg.actions.resize(actions.size());
 
-    _pubNodeStates->publish(msg);
+        for (unsigned int i = 0; i < actions.size(); ++i)
+            msg.actions[i] = actions[i].toMsg();
+
+        _pubNodeActions->publish(msg);
+    }
 }
 
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "lifecycle_controller");
 
-    _nh = std::unique_ptr<ros::NodeHandle>(new ros::NodeHandle);
+    _nh = std::make_shared<ros::NodeHandle>();
     _pubNodeStates = std::unique_ptr<ros::Publisher>(new ros::Publisher);
     *_pubNodeStates = _nh->advertise<lifecycle_msgs::NodeStatusArray>("/lifecycle/controller/node_states", 1);
-    ros::Subscriber subStatus(_nh->subscribe("/lifecycle/status", 100, nodeStatusCallback));
+    _pubNodeActions = std::unique_ptr<ros::Publisher>(new ros::Publisher);
+    *_pubNodeActions = _nh->advertise<lifecycle_msgs::NodeActionArray>("/lifecycle/controller/node_actions", 10);
+
+    _nodeStateDatabase = std::make_shared<lifecycle_control::NodeStateDatabase>(300);
+    _nodeStateHandler = std::make_shared<lifecycle_control::NodeStateHandle>(_nodeStateDatabase, *_nh);
+    _nodeActionHandler = std::make_shared<lifecycle_control::NodeActionHandle>(_nh);
+
+    _nodeStateHandler->registerEventActor(std::static_pointer_cast<lifecycle_control::NodeStateEventActor>(_nodeActionHandler));
+
+    ros::Subscriber subStatus(_nh->subscribe("/lifecycle/status",
+                                             100,
+                                             &lifecycle_control::NodeStateHandle::nodeStatusCallback,
+                                             _nodeStateHandler.get()));
     ros::ServiceServer srv(_nh->advertiseService("/lifecycle/service/controller", callbackService));
     ros::Timer timer = _nh->createTimer(ros::Duration(2.0), callbackTimer);
 

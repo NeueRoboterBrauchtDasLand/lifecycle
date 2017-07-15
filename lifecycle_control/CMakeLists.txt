@@ -110,6 +110,8 @@ catkin_package(
 ## Build ##
 ###########
 
+set(CMAKE_CXX_FLAGS "-std=c++0x -O2 ${CMAKE_CXX_FLAGS}")
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
@@ -119,7 +121,10 @@ include_directories(
 
 ## Declare a C++ library
 add_library(lifecycle-control
-  src/NodeHistory.cpp
+  src/NodeStateDatabase.cpp
+  src/NodeActionHandle.cpp
+  src/NodeStateHandle.cpp
+  src/NodeAction.cpp
 )
 
 ## Add cmake target dependencies of the library

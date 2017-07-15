@@ -9,7 +9,7 @@
 
 #include <lifecycle_msgs/LifecycleControllerAction.h>
 #include <lifecycle_msgs/NodeStatusArray.h>
-#include <lifecycle_msgs/CppNodeStatus.h>
+#include <lifecycle_msgs/cpp/NodeStatus.h>
 
 class UserInterface
 {
@@ -37,10 +37,12 @@ public:
 
     void process(void)
     {
+        std::cout << "Background thread is being started." << std::endl;
         while (ros::ok())
         {
             this->selectTarget();
         }
+        std::cout << "Background thread was finished." << std::endl;
     }
 
     void setNodes(const lifecycle_msgs::NodeStatusArray& msg)
